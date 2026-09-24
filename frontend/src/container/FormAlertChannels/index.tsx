@@ -51,6 +51,7 @@ function FormAlertChannels({
 	testingState,
 	title,
 	editing = false,
+	readOnly = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
@@ -94,71 +95,77 @@ function FormAlertChannels({
 
 			<FormProvider {...form}>
 				<form className={styles.form}>
-					<FormField
-						label={t('field_channel_name')}
-						help={editing ? t('help_channel_name_immutable') : undefined}
-						error={errors.name?.message}
-						htmlFor="channel-name"
-					>
-						<Input
-							id="channel-name"
-							data-testid="channel-name-textbox"
-							disabled={editing}
-							{...register('name')}
-						/>
-					</FormField>
+					<fieldset className={styles.fields} disabled={readOnly}>
+						<FormField
+							label={t('field_channel_name')}
+							help={editing ? t('help_channel_name_immutable') : undefined}
+							error={errors.name?.message}
+							htmlFor="channel-name"
+						>
+							<Input
+								id="channel-name"
+								data-testid="channel-name-textbox"
+								disabled={editing}
+								{...register('name')}
+							/>
+						</FormField>
 
-					<FormField label={t('field_send_resolved')}>
-						<Controller
-							control={control}
-							name="sendResolved"
-							render={({ field }): JSX.Element => (
-								<Switch
-									color="primary"
-									textPlacement="right"
-									testId="field-send-resolved-checkbox"
-									value={!!field.value}
-									onChange={field.onChange}
-								/>
-							)}
-						/>
-					</FormField>
+						<FormField label={t('field_send_resolved')}>
+							<Controller
+								control={control}
+								name="sendResolved"
+								render={({ field }): JSX.Element => (
+									<Switch
+										color="primary"
+										textPlacement="right"
+										testId="field-send-resolved-checkbox"
+										value={!!field.value}
+										onChange={field.onChange}
+									/>
+								)}
+							/>
+						</FormField>
 
-					<FormField label={t('field_channel_type')} htmlFor="channel-type">
-						<SelectSimple
-							id="channel-type"
-							items={CHANNEL_TYPE_OPTIONS}
-							value={type}
-							disabled={editing}
-							onChange={(value): void => onTypeChangeHandler(value as ChannelKind)}
-							withPortal={false}
-							testId="channel-type-select"
-						/>
-					</FormField>
+						<FormField label={t('field_channel_type')} htmlFor="channel-type">
+							<SelectSimple
+								id="channel-type"
+								items={CHANNEL_TYPE_OPTIONS}
+								value={type}
+								disabled={editing}
+								onChange={(value): void => onTypeChangeHandler(value as ChannelKind)}
+								withPortal={false}
+								testId="channel-type-select"
+							/>
+						</FormField>
 
-					{renderSettings()}
+						{renderSettings()}
+					</fieldset>
 
 					<div className={styles.actions}>
-						<Button
-							variant="solid"
-							color="primary"
-							size="sm"
-							testId="save-channel-button"
-							loading={savingState}
-							onClick={onSaveHandler}
-						>
-							{t('button_save_channel')}
-						</Button>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="sm"
-							testId="test-channel-button"
-							loading={testingState}
-							onClick={onTestHandler}
-						>
-							{t('button_test_channel')}
-						</Button>
+						{!readOnly && (
+							<>
+								<Button
+									variant="solid"
+									color="primary"
+									size="sm"
+									testId="save-channel-button"
+									loading={savingState}
+									onClick={onSaveHandler}
+								>
+									{t('button_save_channel')}
+								</Button>
+								<Button
+									variant="outlined"
+									color="secondary"
+									size="sm"
+									testId="test-channel-button"
+									loading={testingState}
+									onClick={onTestHandler}
+								>
+									{t('button_test_channel')}
+								</Button>
+							</>
+						)}
 						<Button
 							variant="outlined"
 							color="secondary"
@@ -188,10 +195,13 @@ interface FormAlertChannelsProps {
 	title: string;
 	// editing indicates if the form is opened in edit mode
 	editing?: boolean;
+	/** The reader has `read` but not `update`, so the form shows without saving. */
+	readOnly?: boolean;
 }
 
 FormAlertChannels.defaultProps = {
 	editing: undefined,
+	readOnly: false,
 };
 
 export default FormAlertChannels;

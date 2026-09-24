@@ -8,3 +8,10 @@
 	gap: var(--spacing-2);
 	margin-top: var(--spacing-4);
 }
+
+.fields {
+	display: contents;
+	border: none;
+	margin: 0;
+	padding: 0;
+}
