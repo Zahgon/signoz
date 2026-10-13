@@ -19,16 +19,18 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 	const { draft, isLoading, loadError } = useChannelDraft(channelId);
 
 	// A reader with `read` but no `update` still gets the screen, without saving.
-	// While the check is in flight the answer is unknown, so the form stays
-	// editable rather than flashing read-only; the API is the real gate.
+	// Only a resolved denial locks it: while the check is in flight, or when it
+	// failed outright, the form stays editable and the API is the real gate.
 	const {
 		canEdit,
 		isLoading: isPermissionLoading,
+		hasError: permissionCheckFailed,
 		editChecks,
 	} = useNotificationChannelPermissions(channelId ?? '', {
 		enabled: !!channelId,
 	});
-	const readOnly = !!channelId && !isPermissionLoading && !canEdit;
+	const readOnly =
+		!!channelId && !isPermissionLoading && !permissionCheckFailed && !canEdit;
 	// Saving an existing channel needs read and update on it; creating one needs
 	// create on the collection, which is also what a test send is gated on.
 	const saveChecks = channelId
@@ -58,14 +60,27 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 	}
 
 	return (
-		<ChannelFormBody
-			draft={draft}
-			channelId={channelId}
-			onDone={onDone}
-			readOnly={readOnly}
-			saveChecks={saveChecks}
-			testChecks={[NotificationChannelCreatePermission]}
-		/>
+		<>
+			{readOnly && (
+				<Callout
+					type="info"
+					showIcon
+					title={t('channel_read_only_title')}
+					className={styles.readOnlyNotice}
+					testId="channel-read-only-notice"
+				>
+					{t('channel_read_only_help')}
+				</Callout>
+			)}
+			<ChannelFormBody
+				draft={draft}
+				channelId={channelId}
+				onDone={onDone}
+				readOnly={readOnly}
+				saveChecks={saveChecks}
+				testChecks={[NotificationChannelCreatePermission]}
+			/>
+		</>
 	);
 }
 
