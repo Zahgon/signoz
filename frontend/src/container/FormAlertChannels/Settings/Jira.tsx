@@ -1,121 +1,94 @@
-import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { Collapse, Form, Input as AntdInput, Select } from 'antd';
+import { Collapse, Input as AntdInput, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
-import {
-	isValidJiraReopenDuration,
-	isValidJiraSiteURL,
-} from '../../CreateAlertChannels/utils';
+import FormField from '../FormField';
 
-function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
+function JiraSettings(): JSX.Element {
 	const { t } = useTranslation('channels');
-
-	const update = (patch: Partial<ChannelSpecFormValues>): void =>
-		setSelectedConfig((value) => ({ ...value, ...patch }));
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 
 	const advanced = (
 		<>
-			<Form.Item
-				name="priority"
+			<FormField
 				label={t('field_jira_priority')}
 				help={t('help_jira_priority')}
+				error={errors.priority?.message}
 			>
 				<Input
+					{...register('priority')}
 					placeholder={t('placeholder_jira_priority')}
-					onChange={(event): void => update({ priority: event.target.value })}
 					data-testid="jira-priority-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="labels"
+			<FormField
 				label={t('field_jira_labels')}
 				help={t('help_jira_labels')}
+				error={errors.labels?.message}
 			>
 				<Select
 					mode="tags"
 					open={false}
 					placeholder={t('placeholder_jira_labels')}
-					onChange={(value): void => update({ labels: value as string[] })}
 					data-testid="jira-labels-select"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="resolveTransition"
+			<FormField
 				label={t('field_jira_resolve_transition')}
 				help={t('help_jira_resolve_transition')}
+				error={errors.resolveTransition?.message}
 			>
 				<Input
+					{...register('resolveTransition')}
 					placeholder={t('placeholder_jira_resolve_transition')}
-					onChange={(event): void =>
-						update({ resolveTransition: event.target.value })
-					}
 					data-testid="jira-resolve-transition-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="reopenTransition"
+			<FormField
 				label={t('field_jira_reopen_transition')}
 				help={t('help_jira_reopen_transition')}
+				error={errors.reopenTransition?.message}
 			>
 				<Input
+					{...register('reopenTransition')}
 					placeholder={t('placeholder_jira_reopen_transition')}
-					onChange={(event): void =>
-						update({ reopenTransition: event.target.value })
-					}
 					data-testid="jira-reopen-transition-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="wontFixResolution"
+			<FormField
 				label={t('field_jira_wont_fix_resolution')}
 				help={t('help_jira_wont_fix_resolution')}
+				error={errors.wontFixResolution?.message}
 			>
 				<Input
+					{...register('wontFixResolution')}
 					placeholder={t('placeholder_jira_wont_fix_resolution')}
-					onChange={(event): void =>
-						update({ wontFixResolution: event.target.value })
-					}
 					data-testid="jira-wont-fix-resolution-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="reopenDuration"
+			<FormField
 				label={t('field_jira_reopen_duration')}
-				extra={t('help_jira_reopen_duration')}
-				rules={[
-					{
-						validator: (_, value: string): Promise<void> =>
-							isValidJiraReopenDuration(value)
-								? Promise.resolve()
-								: Promise.reject(new Error(t('jira_reopen_duration_invalid'))),
-					},
-				]}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_jira_reopen_duration')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
+				help={t('help_jira_reopen_duration')}
+				error={errors.reopenDuration?.message}
 			>
 				<Input
+					{...register('reopenDuration')}
 					placeholder={t('placeholder_jira_reopen_duration')}
-					onChange={(event): void => update({ reopenDuration: event.target.value })}
 					data-testid="jira-reopen-duration-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 		</>
 	);
 
@@ -137,104 +110,87 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 				</Typography.Link>
 			</Typography.Text>
 
-			<Form.Item
-				name="site"
-				label={t('field_jira_site')}
-				required
-				rules={[
-					{
-						validator: (_, value: string): Promise<void> =>
-							!value || isValidJiraSiteURL(value)
-								? Promise.resolve()
-								: Promise.reject(new Error(t('jira_site_invalid'))),
-					},
-				]}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_jira_site')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-			>
+			<FormField label={t('field_jira_site')} error={errors.site?.message}>
 				<Input
+					{...register('site')}
 					placeholder="https://your-domain.atlassian.net"
-					onChange={(event): void => update({ site: event.target.value })}
 					data-testid="jira-site-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="email"
+			<FormField
 				label={t('field_jira_email')}
 				help={t('help_jira_email')}
-				required
+				error={errors.email?.message}
 			>
-				<Input
-					onChange={(event): void => update({ email: event.target.value })}
-					data-testid="jira-email-textbox"
-				/>
-			</Form.Item>
+				<Input {...register('email')} data-testid="jira-email-textbox" />
+			</FormField>
 
-			<Form.Item
-				name="apiToken"
+			<FormField
 				label={t('field_jira_api_token')}
 				help={t('help_jira_api_token')}
-				required
+				error={errors.apiToken?.message}
 			>
 				<Input
+					{...register('apiToken')}
 					type="password"
-					onChange={(event): void => update({ apiToken: event.target.value })}
 					data-testid="jira-api-token-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item name="project" label={t('field_jira_project')} required>
+			<FormField label={t('field_jira_project')} error={errors.project?.message}>
 				<Input
+					{...register('project')}
 					placeholder="e.g. OPS"
-					onChange={(event): void => update({ project: event.target.value })}
 					data-testid="jira-project-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="issueType"
+			<FormField
 				label={t('field_jira_issue_type')}
 				help={t('help_jira_issue_type')}
-				required
+				error={errors.issueType?.message}
 			>
-				<Input
-					onChange={(event): void => update({ issueType: event.target.value })}
-					data-testid="jira-issue-type-textbox"
-				/>
-			</Form.Item>
+				<Input {...register('issueType')} data-testid="jira-issue-type-textbox" />
+			</FormField>
 
-			<Form.Item
-				name="summary"
+			<FormField
 				label={t('field_jira_summary')}
 				help={t('help_jira_summary')}
+				error={errors.summary?.message}
 			>
-				<AntdInput.TextArea
-					rows={2}
-					onChange={(event): void => update({ summary: event.target.value })}
-					data-testid="jira-summary-textarea"
+				<Controller
+					control={control}
+					name="summary"
+					render={({ field }): JSX.Element => (
+						<AntdInput.TextArea
+							rows={2}
+							data-testid="jira-summary-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="description"
+			<FormField
 				label={t('field_jira_description')}
 				help={t('help_jira_description')}
+				error={errors.description?.message}
 			>
-				<AntdInput.TextArea
-					rows={6}
-					onChange={(event): void => update({ description: event.target.value })}
-					data-testid="jira-description-textarea"
+				<Controller
+					control={control}
+					name="description"
+					render={({ field }): JSX.Element => (
+						<AntdInput.TextArea
+							rows={6}
+							data-testid="jira-description-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
 			<Collapse
 				ghost
@@ -248,10 +204,6 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			/>
 		</>
 	);
-}
-
-interface JiraProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
 }
 
 export default JiraSettings;

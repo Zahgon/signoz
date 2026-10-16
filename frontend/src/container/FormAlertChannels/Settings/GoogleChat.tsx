@@ -1,83 +1,57 @@
-import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { Form, Input as AntdInput } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { Input as AntdInput } from 'antd';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
-import { isValidGoogleChatWebhookURL } from '../../CreateAlertChannels/utils';
+import FormField from '../FormField';
 
-function GoogleChat({ setSelectedConfig }: GoogleChatProps): JSX.Element {
+function GoogleChat(): JSX.Element {
 	const { t } = useTranslation('channels');
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 
 	return (
 		<>
-			<Form.Item
-				name="webhookUrl"
-				label={t('field_webhook_url')}
-				required
-				rules={[
-					{
-						validator: (_, value: string): Promise<void> =>
-							!value || isValidGoogleChatWebhookURL(value)
-								? Promise.resolve()
-								: Promise.reject(new Error(t('google_chat_webhook_url_invalid'))),
-					},
-				]}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_google_chat_url')}
-							variables={{}}
+			<FormField label={t('field_webhook_url')} error={errors.webhookUrl?.message}>
+				<Input {...register('webhookUrl')} data-testid="webhook-url-textbox" />
+			</FormField>
+
+			<FormField label={t('field_slack_title')} error={errors.title?.message}>
+				<Controller
+					control={control}
+					name="title"
+					render={({ field }): JSX.Element => (
+						<AntdInput.TextArea
+							rows={4}
+							data-testid="title-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
 						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-			>
-				<Input
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							webhookUrl: event.target.value,
-						}));
-					}}
-					data-testid="webhook-url-textbox"
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item name="title" label={t('field_slack_title')}>
-				<AntdInput.TextArea
-					rows={4}
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							title: event.target.value,
-						}))
-					}
-					data-testid="title-textarea"
+			<FormField label={t('field_slack_description')} error={errors.text?.message}>
+				<Controller
+					control={control}
+					name="text"
+					render={({ field }): JSX.Element => (
+						<AntdInput.TextArea
+							rows={4}
+							data-testid="description-textarea"
+							placeholder={t('placeholder_slack_description')}
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
-
-			<Form.Item name="text" label={t('field_slack_description')}>
-				<AntdInput.TextArea
-					rows={4}
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							text: event.target.value,
-						}))
-					}
-					data-testid="description-textarea"
-					placeholder={t('placeholder_slack_description')}
-				/>
-			</Form.Item>
+			</FormField>
 		</>
 	);
-}
-
-interface GoogleChatProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
 }
 
 export default GoogleChat;

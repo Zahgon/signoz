@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Callout } from '@signozhq/ui/callout';
 import Spinner from 'components/Spinner';
-import FormAlertChannels from 'container/FormAlertChannels';
 
-import { useChannelFormState } from './useChannelFormState';
+import ChannelFormBody from './ChannelFormBody';
 import styles from './ChannelForm.module.scss';
+import { useChannelDraft } from './useChannelDraft';
 
 interface ChannelFormProps {
 	/** Absent when creating. */
@@ -14,19 +14,7 @@ interface ChannelFormProps {
 
 function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
-	const {
-		formInstance,
-		type,
-		values,
-		setValues,
-		onTypeChange,
-		onSave,
-		onTest,
-		isSaving,
-		isTesting,
-		isLoading,
-		loadError,
-	} = useChannelFormState({ channelId, onDone });
+	const { draft, isLoading, loadError } = useChannelDraft(channelId);
 
 	// A channel written through the v1 API can carry a configuration this API
 	// does not model, several notifier configs on one channel for instance.
@@ -46,25 +34,11 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 		);
 	}
 
-	if (isLoading) {
+	if (isLoading || !draft) {
 		return <Spinner tip={t('loading_channels_message')} />;
 	}
 
-	return (
-		<FormAlertChannels
-			formInstance={formInstance}
-			type={type}
-			setSelectedConfig={setValues}
-			onTypeChangeHandler={onTypeChange}
-			onTestHandler={onTest}
-			onSaveHandler={onSave}
-			savingState={isSaving}
-			testingState={isTesting}
-			title={channelId ? t('page_title_edit') : t('page_title_create')}
-			initialValue={{ type, ...values }}
-			editing={!!channelId}
-		/>
-	);
+	return <ChannelFormBody draft={draft} channelId={channelId} onDone={onDone} />;
 }
 
 export default ChannelForm;

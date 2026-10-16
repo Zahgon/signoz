@@ -1,15 +1,12 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Form, Input } from 'antd';
+import { useFormContext } from 'react-hook-form';
+import { Input } from 'antd';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormField from '../FormField';
 
 const { TextArea } = Input;
-
-interface PagerDetailsProps {
-	setSelectedConfig: Dispatch<SetStateAction<ChannelSpecFormValues>>;
-	initialDetails?: Record<string, string>;
-}
 
 const serialize = (details?: Record<string, string>): string =>
 	details && Object.keys(details).length > 0 ? JSON.stringify(details) : '';
@@ -19,12 +16,13 @@ const serialize = (details?: Record<string, string>): string =>
  * here: a half-typed object is not valid JSON and would not survive a round trip
  * through the form's parsed value.
  */
-function PagerDetails({
-	setSelectedConfig,
-	initialDetails,
-}: PagerDetailsProps): JSX.Element {
+function PagerDetails(): JSX.Element {
 	const { t } = useTranslation('channels');
-	const [text, setText] = useState<string>(() => serialize(initialDetails));
+	const { getValues, setValue } = useFormContext<ChannelSpecFormValues>();
+
+	const [text, setText] = useState<string>(() =>
+		serialize(getValues('details') ?? undefined),
+	);
 	const [error, setError] = useState<string | null>(null);
 
 	const onChange = (value: string): void => {
@@ -32,24 +30,23 @@ function PagerDetails({
 
 		if (value.trim() === '') {
 			setError(null);
-			setSelectedConfig((config) => ({ ...config, details: {} }));
+			setValue('details', {}, { shouldDirty: true });
 			return;
 		}
 
 		try {
-			const parsed = JSON.parse(value);
+			setValue('details', JSON.parse(value), { shouldDirty: true });
 			setError(null);
-			setSelectedConfig((config) => ({ ...config, details: parsed }));
 		} catch {
 			setError(t('pager_details_invalid_json'));
 		}
 	};
 
 	return (
-		<Form.Item
-			help={error ?? t('help_pager_details')}
+		<FormField
+			error={error ?? undefined}
+			help={t('help_pager_details')}
 			label={t('field_pager_details')}
-			validateStatus={error ? 'error' : undefined}
 		>
 			<TextArea
 				rows={4}
@@ -57,7 +54,7 @@ function PagerDetails({
 				onChange={(event): void => onChange(event.target.value)}
 				data-testid="pager-additional-details-textarea"
 			/>
-		</Form.Item>
+		</FormField>
 	);
 }
 

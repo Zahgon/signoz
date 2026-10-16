@@ -1,96 +1,91 @@
 import { useTranslation } from 'react-i18next';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { Form, Input as AntdInput } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { Input as AntdInput } from 'antd';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormField from '../FormField';
 
 const { TextArea } = AntdInput;
 
-function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
+function OpsgenieForm(): JSX.Element {
 	const { t } = useTranslation('channels');
-
-	const handleInputChange =
-		(field: string) =>
-		(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
-			setSelectedConfig((value) => ({
-				...value,
-				[field]: event.target.value,
-			}));
-		};
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 
 	return (
 		<>
-			<Form.Item
-				name="apiKey"
+			<FormField
 				label={t('field_opsgenie_api_key')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_opsgenie_api_key')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-				required
+				error={errors.apiKey?.message}
 			>
-				<Input
-					onChange={handleInputChange('apiKey')}
-					data-testid="opsgenie-api-key-textbox"
-				/>
-			</Form.Item>
+				<Input {...register('apiKey')} data-testid="opsgenie-api-key-textbox" />
+			</FormField>
 
-			<Form.Item
-				name="message"
+			<FormField
 				help={t('help_opsgenie_message')}
 				label={t('field_opsgenie_message')}
-				required
+				error={errors.message?.message}
 			>
-				<TextArea
-					rows={4}
-					onChange={handleInputChange('message')}
-					placeholder={t('placeholder_opsgenie_message')}
-					data-testid="opsgenie-message-textarea"
+				<Controller
+					control={control}
+					name="message"
+					render={({ field }): JSX.Element => (
+						<TextArea
+							rows={4}
+							placeholder={t('placeholder_opsgenie_message')}
+							data-testid="opsgenie-message-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="description"
+			<FormField
 				help={t('help_opsgenie_description')}
 				label={t('field_opsgenie_description')}
-				required
+				error={errors.description?.message}
 			>
-				<TextArea
-					rows={4}
-					onChange={handleInputChange('description')}
-					placeholder={t('placeholder_opsgenie_description')}
-					data-testid="opsgenie-description-textarea"
+				<Controller
+					control={control}
+					name="description"
+					render={({ field }): JSX.Element => (
+						<TextArea
+							rows={4}
+							placeholder={t('placeholder_opsgenie_description')}
+							data-testid="opsgenie-description-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="priority"
+			<FormField
 				help={t('help_opsgenie_priority')}
 				label={t('field_opsgenie_priority')}
-				required
+				error={errors.priority?.message}
 			>
-				<TextArea
-					rows={4}
-					onChange={handleInputChange('priority')}
-					placeholder={t('placeholder_opsgenie_priority')}
-					data-testid="opsgenie-priority-textarea"
+				<Controller
+					control={control}
+					name="priority"
+					render={({ field }): JSX.Element => (
+						<TextArea
+							rows={4}
+							placeholder={t('placeholder_opsgenie_priority')}
+							data-testid="opsgenie-priority-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 		</>
 	);
-}
-
-interface OpsgenieFormProps {
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<ChannelSpecFormValues>>
-	>;
 }
 
 export default OpsgenieForm;

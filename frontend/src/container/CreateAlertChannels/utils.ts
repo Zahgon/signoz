@@ -120,3 +120,10 @@ export const isValidIncidentIOURL = (url: string): boolean => {
 		return false;
 	}
 };
+
+/** Drops the rows a user added and left blank, keyed on the column the API requires. */
+export const filledRows = <T>(
+	rows: T[] | null | undefined,
+	required: keyof T,
+): T[] =>
+	(rows ?? []).filter((row) => String(row[required] ?? '').trim() !== '');

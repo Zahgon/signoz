@@ -1,22 +1,41 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Minus, Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
-import { Button, Form, Input as AntdInput } from 'antd';
+import { Button, Input as AntdInput } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormField from '../FormField';
 
 interface MetadataRow {
 	key: string;
 	value: string;
 }
 
-function IncidentIOSettings({
-	setSelectedConfig,
-	initialMetadata,
-}: IncidentIOProps): JSX.Element {
+function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 	const { t } = useTranslation('channels');
+	const {
+		register,
+		control,
+		getValues,
+		setValue,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
+
+	/** Writes straight into the form, for controls that are not plain inputs. */
+	const setSelectedConfig = (
+		patch: (
+			current: Partial<ChannelSpecFormValues>,
+		) => Partial<ChannelSpecFormValues>,
+	): void => {
+		Object.entries(patch(getValues())).forEach(([field, value]) => {
+			setValue(field as keyof ChannelSpecFormValues, value as never, {
+				shouldDirty: true,
+			});
+		});
+	};
 	const [metadataRows, setMetadataRows] = useState<MetadataRow[]>(() =>
 		Object.entries(initialMetadata || {}).map(([key, value]) => ({
 			key,
@@ -56,56 +75,65 @@ function IncidentIOSettings({
 				</Typography.Link>
 			</Typography.Text>
 
-			<Form.Item
-				name="url"
+			<FormField
 				label={t('field_incidentio_url')}
 				help={t('help_incidentio_url')}
-				required
+				error={errors.url?.message}
 			>
-				<Input
-					onChange={(event): void => update({ url: event.target.value })}
-					data-testid="incidentio-url-textbox"
-				/>
-			</Form.Item>
+				<Input {...register('url')} data-testid="incidentio-url-textbox" />
+			</FormField>
 
-			<Form.Item
-				name="token"
+			<FormField
 				label={t('field_incidentio_token')}
 				help={t('help_incidentio_token')}
-				required
+				error={errors.token?.message}
 			>
 				<Input
+					{...register('token')}
 					type="password"
-					onChange={(event): void => update({ token: event.target.value })}
 					data-testid="incidentio-token-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="title"
+			<FormField
 				label={t('field_incidentio_title')}
 				help={t('help_incidentio_title')}
+				error={errors.title?.message}
 			>
-				<AntdInput.TextArea
-					rows={2}
-					onChange={(event): void => update({ title: event.target.value })}
-					data-testid="incidentio-title-textarea"
+				<Controller
+					control={control}
+					name="title"
+					render={({ field }): JSX.Element => (
+						<AntdInput.TextArea
+							rows={2}
+							data-testid="incidentio-title-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="description"
+			<FormField
 				label={t('field_incidentio_description')}
 				help={t('help_incidentio_description')}
+				error={errors.description?.message}
 			>
-				<AntdInput.TextArea
-					rows={6}
-					onChange={(event): void => update({ description: event.target.value })}
-					data-testid="incidentio-description-textarea"
+				<Controller
+					control={control}
+					name="description"
+					render={({ field }): JSX.Element => (
+						<AntdInput.TextArea
+							rows={6}
+							data-testid="incidentio-description-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
+			<FormField
 				label={t('field_incidentio_metadata')}
 				help={t('help_incidentio_metadata')}
 			>
@@ -156,13 +184,12 @@ function IncidentIOSettings({
 				>
 					{t('button_incidentio_add_metadata')}
 				</Button>
-			</Form.Item>
+			</FormField>
 		</>
 	);
 }
 
 interface IncidentIOProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
 	initialMetadata?: Record<string, string>;
 }
 

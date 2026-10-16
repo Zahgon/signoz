@@ -1,75 +1,58 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { Form, Input as AntdInput } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { Input as AntdInput } from 'antd';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormField from '../FormField';
 
-function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
+function MsTeams(): JSX.Element {
 	const { t } = useTranslation('channels');
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 
 	return (
 		<>
-			<Form.Item
-				name="webhookUrl"
-				label={t('field_webhook_url')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_ms_teams_url')}
-							variables={{}}
+			<FormField label={t('field_webhook_url')} error={errors.webhookUrl?.message}>
+				<Input {...register('webhookUrl')} data-testid="webhook-url-textbox" />
+			</FormField>
+
+			<FormField label={t('field_slack_title')} error={errors.title?.message}>
+				<Controller
+					control={control}
+					name="title"
+					render={({ field }): JSX.Element => (
+						<AntdInput.TextArea
+							rows={4}
+							// value={`[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n{{\" \"}}(\n{{- with .CommonLabels.Remove .GroupLabels.Names }}\n    {{- range $index, $label := .SortedPairs -}}\n    {{ if $index }}, {{ end }}\n    {{- $label.Name }}=\"{{ $label.Value -}}\"\n    {{- end }}\n{{- end -}}\n)\n{{- end }}`}
+							data-testid="title-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
 						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-			>
-				<Input
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							webhookUrl: event.target.value,
-						}));
-					}}
-					data-testid="webhook-url-textbox"
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item name="title" label={t('field_slack_title')}>
-				<AntdInput.TextArea
-					rows={4}
-					// value={`[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n{{\" \"}}(\n{{- with .CommonLabels.Remove .GroupLabels.Names }}\n    {{- range $index, $label := .SortedPairs -}}\n    {{ if $index }}, {{ end }}\n    {{- $label.Name }}=\"{{ $label.Value -}}\"\n    {{- end }}\n{{- end -}}\n)\n{{- end }}`}
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							title: event.target.value,
-						}))
-					}
-					data-testid="title-textarea"
+			<FormField label={t('field_slack_description')} error={errors.text?.message}>
+				<Controller
+					control={control}
+					name="text"
+					render={({ field }): JSX.Element => (
+						<AntdInput.TextArea
+							data-testid="description-textarea"
+							placeholder={t('placeholder_slack_description')}
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
-
-			<Form.Item name="text" label={t('field_slack_description')}>
-				<AntdInput.TextArea
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							text: event.target.value,
-						}))
-					}
-					data-testid="description-textarea"
-					placeholder={t('placeholder_slack_description')}
-				/>
-			</Form.Item>
+			</FormField>
 		</>
 	);
-}
-
-interface MsTeamsProps {
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<ChannelSpecFormValues>>
-	>;
 }
 
 export default MsTeams;

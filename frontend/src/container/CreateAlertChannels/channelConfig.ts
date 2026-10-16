@@ -14,11 +14,11 @@ import {
 	AlertmanagertypesTestableNotificationChannelDTO,
 	AlertmanagertypesUpdatableNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { pick } from 'lodash-es';
+import { omit, pick } from 'lodash-es';
 import { omitBlank } from 'utils/omitBlank';
 
 import { ChannelFormValues, ChannelKind, ChannelSpecFormValues } from './types';
-import { canonicalJiraReopenDuration } from './utils';
+import { canonicalJiraReopenDuration, filledRows } from './utils';
 
 /**
  * The fields each kind sends. `satisfies` ties every entry to that kind's
@@ -128,9 +128,23 @@ export function toChannelConfig(
 	kind: ChannelKind,
 	values: ChannelFormValues,
 ): AlertmanagertypesChannelConfigDTO {
-	const spec: Record<string, unknown> = omitBlank(
-		pick(values, SPEC_FIELDS[kind]),
-	);
+	const picked: Record<string, unknown> = pick(values, SPEC_FIELDS[kind]);
+
+	if (kind === ChannelKind.slack) {
+		picked.fields = filledRows(
+			picked.fields as AlertmanagertypesChannelSlackConfigDTO['fields'],
+			'title',
+		);
+		// an untouched confirm box leaves an empty object the API would store
+		picked.actions = filledRows(
+			picked.actions as AlertmanagertypesChannelSlackConfigDTO['actions'],
+			'text',
+		).map((action) =>
+			action.confirm?.text?.trim() ? action : omit(action, 'confirm'),
+		);
+	}
+
+	const spec: Record<string, unknown> = omitBlank(picked);
 
 	// the API answers a read with the duration prometheus would print, and
 	// rejects anything spelled differently

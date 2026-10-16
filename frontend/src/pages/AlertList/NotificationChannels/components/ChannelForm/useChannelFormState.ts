@@ -1,20 +1,12 @@
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { Form, FormInstance } from 'antd';
+import { useForm, UseFormReturn } from 'react-hook-form';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetNotificationChannel,
 	invalidateListNotificationChannels,
 	useCreateNotificationChannel,
-	useGetNotificationChannel,
 	useTestNotificationChannel,
 	useUpdateNotificationChannel,
 } from 'api/generated/services/channels';
@@ -25,41 +17,36 @@ import {
 	toTestableChannel,
 	toUpdatableChannel,
 } from 'container/CreateAlertChannels/channelConfig';
-import {
-	ChannelFormState,
-	toChannelFormState,
-} from 'container/CreateAlertChannels/channelFormValues';
+import { ChannelFormState } from 'container/CreateAlertChannels/channelFormValues';
 import {
 	ChannelFormValues,
 	ChannelKind,
 } from 'container/CreateAlertChannels/types';
 import { ChannelInitialConfig } from 'container/CreateAlertChannels/defaults';
-import { validateChannel } from 'container/CreateAlertChannels/validation';
+import { channelResolver } from 'container/CreateAlertChannels/channelResolver';
 import { useNotifications } from 'hooks/useNotifications';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toAPIError } from 'utils/errorUtils';
 
 export interface ChannelFormStateResult {
-	formInstance: FormInstance;
+	form: UseFormReturn<ChannelFormValues>;
 	type: ChannelKind;
-	values: ChannelFormValues;
-	setValues: React.Dispatch<React.SetStateAction<ChannelFormValues>>;
 	onTypeChange: (value: string) => void;
-	onSave: (type: ChannelKind) => Promise<void>;
-	onTest: (type: ChannelKind) => Promise<void>;
+	onSave: () => void;
+	onTest: () => void;
 	isSaving: boolean;
 	isTesting: boolean;
-	isLoading: boolean;
-	/** A channel the v2 API cannot model, or one that no longer exists. */
-	loadError: string | null;
 }
 
 interface UseChannelFormStateArgs {
+	/** Already resolved: the caller renders this hook's owner only once it is. */
+	draft: ChannelFormState;
 	channelId?: string;
 	onDone: () => void;
 }
 
 export function useChannelFormState({
+	draft,
 	channelId,
 	onDone,
 }: UseChannelFormStateArgs): ChannelFormStateResult {
@@ -67,58 +54,15 @@ export function useChannelFormState({
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 	const queryClient = useQueryClient();
-	const [formInstance] = Form.useForm();
 
 	const isEditing = !!channelId;
 
-	const { data, error: loadFailure } = useGetNotificationChannel(
-		{ id: channelId ?? '' },
-		{ query: { enabled: isEditing } },
-	);
+	const [type, setTypeState] = useState<ChannelKind>(draft.kind);
 
-	/**
-	 * antd reads `initialValues` once, when the Form mounts, so the loaded channel
-	 * has to be in state before the form renders. Creating starts from the
-	 * defaults; editing stays null until the fetch lands and the caller holds the
-	 * form back.
-	 */
-	const [draft, setDraft] = useState<ChannelFormState | null>(() =>
-		channelId
-			? null
-			: {
-					kind: ChannelKind.slack,
-					values: {
-						sendResolved: true,
-						...ChannelInitialConfig[ChannelKind.slack],
-					},
-				},
-	);
-
-	useEffect(() => {
-		if (data?.data) {
-			setDraft((current) => current ?? toChannelFormState(data.data));
-		}
-	}, [data]);
-
-	const type = draft?.kind ?? ChannelKind.slack;
-	const values = useMemo(() => draft?.values ?? {}, [draft]);
-
-	const setType = useCallback((next: ChannelKind): void => {
-		setDraft((current) => (current ? { ...current, kind: next } : current));
-	}, []);
-
-	const setValues: Dispatch<SetStateAction<ChannelFormValues>> = useCallback(
-		(update) => {
-			setDraft((current) => {
-				if (!current) {
-					return current;
-				}
-				const next = typeof update === 'function' ? update(current.values) : update;
-				return { ...current, values: next };
-			});
-		},
-		[],
-	);
+	const form = useForm<ChannelFormValues>({
+		defaultValues: draft.values,
+		resolver: channelResolver(type, t),
+	});
 
 	const { mutateAsync: createChannel, isLoading: isCreating } =
 		useCreateNotificationChannel();
@@ -134,37 +78,33 @@ export function useChannelFormState({
 				return;
 			}
 
-			setType(nextType);
+			setTypeState(nextType);
 
 			// the fields the types share (title, text, description) keep the value of
-			// the type that was selected before, so the new type's defaults have to be
-			// written to both the config and the form
-			const defaults = ChannelInitialConfig[nextType];
-			setValues((current) => ({ ...current, ...defaults }));
-			formInstance.setFieldsValue(defaults);
+			// the type selected before, so the new type's defaults replace them
+			Object.entries(ChannelInitialConfig[nextType]).forEach(([field, value]) => {
+				form.setValue(
+					field as keyof ChannelFormValues,
+					value as ChannelFormValues[keyof ChannelFormValues],
+				);
+			});
 		},
-		[type, formInstance, setType, setValues],
+		[type, form],
 	);
 
-	const onSave = useCallback(
-		async (channelType: ChannelKind): Promise<void> => {
-			const validationError = validateChannel(channelType, values, t);
-			if (validationError) {
-				notifications.error({ message: 'Error', description: validationError });
-				return;
-			}
-
+	const submitSave = useCallback(
+		async (values: ChannelFormValues): Promise<void> => {
 			try {
 				if (isEditing) {
 					await updateChannel({
 						pathParams: { id: channelId as string },
-						data: toUpdatableChannel(channelType, values),
+						data: toUpdatableChannel(type, values),
 					});
 					await invalidateGetNotificationChannel(queryClient, {
 						id: channelId as string,
 					});
 				} else {
-					await createChannel({ data: toPostableChannel(channelType, values) });
+					await createChannel({ data: toPostableChannel(type, values) });
 				}
 
 				await invalidateListNotificationChannels(queryClient);
@@ -175,7 +115,7 @@ export function useChannelFormState({
 						: t('channel_creation_done'),
 				});
 				void logEvent('Alert Channel: Save channel', {
-					type: channelType,
+					type: type,
 					sendResolvedAlert: values.sendResolved,
 					name: values.name,
 					new: isEditing ? 'false' : 'true',
@@ -185,7 +125,7 @@ export function useChannelFormState({
 			} catch (error) {
 				showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
 				void logEvent('Alert Channel: Save channel', {
-					type: channelType,
+					type: type,
 					sendResolvedAlert: values.sendResolved,
 					name: values.name,
 					new: isEditing ? 'false' : 'true',
@@ -194,7 +134,7 @@ export function useChannelFormState({
 			}
 		},
 		[
-			values,
+			type,
 			t,
 			notifications,
 			isEditing,
@@ -207,54 +147,38 @@ export function useChannelFormState({
 		],
 	);
 
-	const onTest = useCallback(
-		async (channelType: ChannelKind): Promise<void> => {
-			const validationError = validateChannel(channelType, values, t);
-			if (validationError) {
-				notifications.error({ message: 'Error', description: validationError });
-				return;
-			}
-
+	const submitTest = useCallback(
+		async (values: ChannelFormValues): Promise<void> => {
 			try {
-				await testChannel({ data: toTestableChannel(channelType, values) });
+				await testChannel({ data: toTestableChannel(type, values) });
 				notifications.success({
 					message: 'Success',
 					description: t('channel_test_done'),
 				});
 				void logEvent('Alert Channel: Test notification', {
-					type: channelType,
+					type: type,
 					name: values.name,
 					status: 'Test success',
 				});
 			} catch (error) {
 				showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
 				void logEvent('Alert Channel: Test notification', {
-					type: channelType,
+					type: type,
 					name: values.name,
 					status: 'Test failed',
 				});
 			}
 		},
-		[values, t, notifications, testChannel, showErrorModal],
+		[type, t, notifications, testChannel, showErrorModal],
 	);
 
 	return {
-		formInstance,
+		form,
 		type,
-		values,
-		setValues,
 		onTypeChange,
-		onSave,
-		onTest,
+		onSave: form.handleSubmit(submitSave),
+		onTest: form.handleSubmit(submitTest),
 		isSaving: isCreating || isUpdating,
 		isTesting,
-		// A failed fetch never produces a draft, so the spinner has to yield to the
-		// error rather than wait for one.
-		isLoading: isEditing && !draft && !loadFailure,
-		loadError: loadFailure
-			? toAPIError(
-					loadFailure as ErrorType<RenderErrorResponseDTO>,
-				).getErrorMessage()
-			: null,
 	};
 }

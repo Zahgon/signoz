@@ -1,187 +1,112 @@
-import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { Form, Input as AntdInput } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
-
-import {
-	AlertmanagertypesChannelSlackActionDTO,
-	AlertmanagertypesChannelSlackFieldDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Input as AntdInput } from 'antd';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormField from '../FormField';
 import SlackActions from './SlackActions';
 import SlackFields from './SlackFields';
 
 const { TextArea } = AntdInput;
 
-function Slack({
-	setSelectedConfig,
-	initialFields,
-	initialActions,
-}: SlackProps): JSX.Element {
+function Slack(): JSX.Element {
 	const { t } = useTranslation('channels');
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 
 	return (
 		<>
-			<Form.Item
-				name="apiUrl"
-				label={t('field_webhook_url')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_slack_url')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-			>
-				<Input
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							apiUrl: event.target.value,
-						}));
-					}}
-					data-testid="webhook-url-textbox"
-				/>
-			</Form.Item>
+			<FormField label={t('field_webhook_url')} error={errors.apiUrl?.message}>
+				<Input {...register('apiUrl')} data-testid="webhook-url-textbox" />
+			</FormField>
 
-			<Form.Item
-				name="channel"
+			<FormField
 				help={t('slack_channel_help')}
 				label={t('field_slack_recipient')}
+				error={errors.channel?.message}
 			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							channel: event.target.value,
-						}))
-					}
-					data-testid="slack-channel-textbox"
-				/>
-			</Form.Item>
+				<Input {...register('channel')} data-testid="slack-channel-textbox" />
+			</FormField>
 
-			<Form.Item name="title" label={t('field_slack_title')}>
-				<TextArea
-					data-testid="title-textarea"
-					rows={4}
-					// value={`[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n{{\" \"}}(\n{{- with .CommonLabels.Remove .GroupLabels.Names }}\n    {{- range $index, $label := .SortedPairs -}}\n    {{ if $index }}, {{ end }}\n    {{- $label.Name }}=\"{{ $label.Value -}}\"\n    {{- end }}\n{{- end -}}\n)\n{{- end }}`}
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							title: event.target.value,
-						}))
-					}
+			<FormField label={t('field_slack_title')} error={errors.title?.message}>
+				<Controller
+					control={control}
+					name="title"
+					render={({ field }): JSX.Element => (
+						<TextArea
+							data-testid="title-textarea"
+							rows={4}
+							// value={`[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n{{\" \"}}(\n{{- with .CommonLabels.Remove .GroupLabels.Names }}\n    {{- range $index, $label := .SortedPairs -}}\n    {{ if $index }}, {{ end }}\n    {{- $label.Name }}=\"{{ $label.Value -}}\"\n    {{- end }}\n{{- end -}}\n)\n{{- end }}`}
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item name="titleLink" label={t('field_slack_title_link')}>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							titleLink: event.target.value,
-						}))
-					}
-					data-testid="title-link-textbox"
+			<FormField
+				label={t('field_slack_title_link')}
+				error={errors.titleLink?.message}
+			>
+				<Input {...register('titleLink')} data-testid="title-link-textbox" />
+			</FormField>
+
+			<FormField label={t('field_slack_description')} error={errors.text?.message}>
+				<Controller
+					control={control}
+					name="text"
+					render={({ field }): JSX.Element => (
+						<TextArea
+							placeholder={t('placeholder_slack_description')}
+							data-testid="description-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item name="text" label={t('field_slack_description')}>
-				<TextArea
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							text: event.target.value,
-						}))
-					}
-					placeholder={t('placeholder_slack_description')}
-					data-testid="description-textarea"
-				/>
-			</Form.Item>
-
-			<Form.Item
-				name="color"
+			<FormField
 				label={t('field_slack_color')}
 				help={t('help_slack_color')}
+				error={errors.color?.message}
 			>
 				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							color: event.target.value,
-						}))
-					}
+					{...register('color')}
 					placeholder={t('placeholder_slack_color')}
 					data-testid="slack-color-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="pretext"
+			<FormField
 				label={t('field_slack_pretext')}
 				help={t('help_slack_pretext')}
+				error={errors.pretext?.message}
 			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							pretext: event.target.value,
-						}))
-					}
-					data-testid="slack-pretext-textbox"
-				/>
-			</Form.Item>
+				<Input {...register('pretext')} data-testid="slack-pretext-textbox" />
+			</FormField>
 
-			<Form.Item
-				name="fallback"
+			<FormField
 				label={t('field_slack_fallback')}
 				help={t('help_slack_fallback')}
+				error={errors.fallback?.message}
 			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							fallback: event.target.value,
-						}))
-					}
-					data-testid="slack-fallback-textbox"
-				/>
-			</Form.Item>
+				<Input {...register('fallback')} data-testid="slack-fallback-textbox" />
+			</FormField>
 
-			<Form.Item name="footer" label={t('field_slack_footer')}>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							footer: event.target.value,
-						}))
-					}
-					data-testid="slack-footer-textbox"
-				/>
-			</Form.Item>
+			<FormField label={t('field_slack_footer')} error={errors.footer?.message}>
+				<Input {...register('footer')} data-testid="slack-footer-textbox" />
+			</FormField>
 
-			<SlackFields
-				setSelectedConfig={setSelectedConfig}
-				initialFields={initialFields}
-			/>
+			<SlackFields />
 
-			<SlackActions
-				setSelectedConfig={setSelectedConfig}
-				initialActions={initialActions}
-			/>
+			<SlackActions />
 		</>
 	);
-}
-
-interface SlackProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
-	initialFields?: AlertmanagertypesChannelSlackFieldDTO[];
-	initialActions?: AlertmanagertypesChannelSlackActionDTO[];
 }
 
 export default Slack;

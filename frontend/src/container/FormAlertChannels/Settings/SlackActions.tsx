@@ -1,112 +1,65 @@
-import { Dispatch, SetStateAction, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Minus, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Form } from 'antd';
-import { AlertmanagertypesChannelSlackActionDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormField from '../FormField';
 import styles from './SlackActions.module.scss';
-
-interface SlackActionsProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
-	initialActions?: AlertmanagertypesChannelSlackActionDTO[];
-}
-
-const emptyAction: AlertmanagertypesChannelSlackActionDTO = {
-	type: 'button',
-	text: '',
-	url: '',
-};
 
 // Buttons Slack renders under the attachment. `type` and `text` are required by
 // the API; a `button` carrying a url is the link-out case, the rest drive a
 // Slack app's own callbacks.
-function SlackActions({
-	setSelectedConfig,
-	initialActions,
-}: SlackActionsProps): JSX.Element {
+function SlackActions(): JSX.Element {
 	const { t } = useTranslation('channels');
-	const [rows, setRows] = useState<AlertmanagertypesChannelSlackActionDTO[]>(
-		() => initialActions ?? [],
-	);
-
-	const sync = (next: AlertmanagertypesChannelSlackActionDTO[]): void => {
-		setRows(next);
-		setSelectedConfig((value) => ({
-			...value,
-			actions: next.filter((row) => row.text.trim() !== ''),
-		}));
-	};
-
-	const updateRow = (
-		index: number,
-		patch: Partial<AlertmanagertypesChannelSlackActionDTO>,
-	): void =>
-		sync(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+	const { control, register } = useFormContext<ChannelSpecFormValues>();
+	const { fields, append, remove } = useFieldArray({ control, name: 'actions' });
 
 	return (
-		<Form.Item label={t('field_slack_actions')} help={t('help_slack_actions')}>
-			{rows.map((row, index) => (
-				// the rows have no stable id, and reordering is not offered
-				// eslint-disable-next-line react/no-array-index-key
-				<div key={index} className={styles.row}>
+		<FormField label={t('field_slack_actions')} help={t('help_slack_actions')}>
+			{fields.map((row, index) => (
+				<div key={row.id} className={styles.row}>
 					<Input
-						value={row.text}
+						{...register(`actions.${index}.text`)}
 						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_text')}
-						onChange={(event): void => updateRow(index, { text: event.target.value })}
 						testId={`slack-action-text-${index}`}
 					/>
 					<Input
-						value={row.url}
+						{...register(`actions.${index}.url`)}
 						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_url')}
-						onChange={(event): void => updateRow(index, { url: event.target.value })}
 						testId={`slack-action-url-${index}`}
 					/>
 					<Input
-						value={row.type}
+						{...register(`actions.${index}.type`)}
 						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_type')}
-						onChange={(event): void => updateRow(index, { type: event.target.value })}
 						testId={`slack-action-type-${index}`}
 					/>
 					<Input
-						value={row.name ?? ''}
+						{...register(`actions.${index}.name`)}
 						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_name')}
-						onChange={(event): void => updateRow(index, { name: event.target.value })}
 						testId={`slack-action-name-${index}`}
 					/>
 					<Input
-						value={row.value ?? ''}
+						{...register(`actions.${index}.value`)}
 						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_value')}
-						onChange={(event): void =>
-							updateRow(index, { value: event.target.value })
-						}
 						testId={`slack-action-value-${index}`}
 					/>
 					<Input
-						value={row.style ?? ''}
+						{...register(`actions.${index}.style`)}
 						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_style')}
-						onChange={(event): void =>
-							updateRow(index, { style: event.target.value })
-						}
 						testId={`slack-action-style-${index}`}
 					/>
 					<Input
-						value={row.confirm?.text ?? ''}
+						{...register(`actions.${index}.confirm.text`)}
 						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_confirm')}
-						onChange={(event): void =>
-							updateRow(index, {
-								confirm: event.target.value ? { text: event.target.value } : undefined,
-							})
-						}
 						testId={`slack-action-confirm-${index}`}
 					/>
 					<Button
@@ -115,7 +68,7 @@ function SlackActions({
 						size="sm"
 						icon
 						aria-label={t('remove_slack_action')}
-						onClick={(): void => sync(rows.filter((_, i) => i !== index))}
+						onClick={(): void => remove(index)}
 						testId={`slack-action-remove-${index}`}
 					>
 						<Minus size={14} />
@@ -127,12 +80,12 @@ function SlackActions({
 				color="secondary"
 				size="sm"
 				prefix={<Plus size={14} />}
-				onClick={(): void => sync([...rows, { ...emptyAction }])}
+				onClick={(): void => append({ type: 'button', text: '', url: '' })}
 				testId="slack-action-add"
 			>
 				{t('add_slack_action')}
 			</Button>
-		</Form.Item>
+		</FormField>
 	);
 }
 

@@ -1,15 +1,15 @@
-import { Dispatch, ReactElement, SetStateAction } from 'react';
+import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Controller, FormProvider, UseFormReturn } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Switch } from '@signozhq/ui/switch';
-import { Form, FormInstance, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import type { Store } from 'antd/lib/form/interface';
-import ROUTES from 'constants/routes';
 import {
+	ChannelFormValues,
 	ChannelKind,
-	ChannelSpecFormValues,
 } from 'container/CreateAlertChannels/types';
+import ROUTES from 'constants/routes';
 import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
@@ -22,65 +22,65 @@ import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
-import { Button } from './styles';
+import { Button } from '@signozhq/ui/button';
+
+import FormField from './FormField';
+import styles from './FormAlertChannels.module.scss';
+
+/** The kinds the form can create, in the order the picker lists them. */
+const CHANNEL_TYPE_OPTIONS = [
+	{ value: ChannelKind.slack, label: 'Slack' },
+	{ value: ChannelKind.webhook, label: 'Webhook' },
+	{ value: ChannelKind.pagerduty, label: 'Pagerduty' },
+	{ value: ChannelKind.opsgenie, label: 'Opsgenie' },
+	{ value: ChannelKind.email, label: 'Email' },
+	{ value: ChannelKind.msteams, label: 'Microsoft Teams' },
+	{ value: ChannelKind.googlechat, label: 'Google Chat' },
+	{ value: ChannelKind.jira, label: 'Jira' },
+	{ value: ChannelKind.jsmops, label: 'Jira Service Management Ops' },
+	{ value: ChannelKind.incidentio, label: 'incident.io' },
+];
 
 function FormAlertChannels({
-	formInstance,
+	form,
 	type,
-	setSelectedConfig,
 	onTypeChangeHandler,
 	onTestHandler,
 	onSaveHandler,
 	savingState,
 	testingState,
 	title,
-	initialValue,
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = form;
 
 	const renderSettings = (): ReactElement | null => {
 		switch (type) {
 			case ChannelKind.slack:
-				return (
-					<SlackSettings
-						setSelectedConfig={setSelectedConfig}
-						initialFields={
-							(initialValue?.fields as ChannelSpecFormValues['fields']) ?? undefined
-						}
-						initialActions={
-							(initialValue?.actions as ChannelSpecFormValues['actions']) ?? undefined
-						}
-					/>
-				);
+				return <SlackSettings />;
 			case ChannelKind.webhook:
-				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
+				return <WebhookSettings />;
 			case ChannelKind.pagerduty:
-				return (
-					<PagerSettings
-						setSelectedConfig={setSelectedConfig}
-						initialDetails={initialValue?.details as Record<string, string>}
-					/>
-				);
+				return <PagerSettings />;
 			case ChannelKind.msteams:
-				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
+				return <MsTeamsSettings />;
 			case ChannelKind.googlechat:
-				return <GoogleChatSettings setSelectedConfig={setSelectedConfig} />;
+				return <GoogleChatSettings />;
 			case ChannelKind.jira:
-				return <JiraSettings setSelectedConfig={setSelectedConfig} />;
+				return <JiraSettings />;
 			case ChannelKind.jsmops:
-				return <JsmOpsSettings setSelectedConfig={setSelectedConfig} />;
+				return <JsmOpsSettings />;
 			case ChannelKind.incidentio:
-				return (
-					<IncidentIOSettings
-						setSelectedConfig={setSelectedConfig}
-						initialMetadata={initialValue?.metadata as Record<string, string>}
-					/>
-				);
+				return <IncidentIOSettings />;
 			case ChannelKind.opsgenie:
-				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
+				return <OpsgenieSettings />;
 			case ChannelKind.email:
-				return <EmailSettings setSelectedConfig={setSelectedConfig} />;
+				return <EmailSettings />;
 			default:
 				return null;
 		}
@@ -92,150 +92,100 @@ function FormAlertChannels({
 				{title}
 			</Typography.Title>
 
-			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<Form.Item
-					label={t('field_channel_name')}
-					labelAlign="left"
-					name="name"
-					extra={editing ? t('help_channel_name_immutable') : undefined}
-				>
-					<Input
-						data-testid="channel-name-textbox"
-						disabled={editing}
-						onChange={(event): void => {
-							setSelectedConfig((state) => ({
-								...state,
-								name: event.target.value,
-							}));
-						}}
-					/>
-				</Form.Item>
-
-				<Form.Item
-					label={t('field_send_resolved')}
-					labelAlign="left"
-					name="sendResolved"
-					getValueProps={(value): { value: boolean } => ({ value: !!value })}
-				>
-					<Switch
-						color="primary"
-						textPlacement="right"
-						testId="field-send-resolved-checkbox"
-						onChange={(value): void => {
-							setSelectedConfig((state) => ({
-								...state,
-								sendResolved: value,
-							}));
-						}}
-					/>
-				</Form.Item>
-
-				<Form.Item label={t('field_channel_type')} labelAlign="left" name="type">
-					<Select
-						disabled={editing}
-						onChange={onTypeChangeHandler}
-						value={type}
-						data-testid="channel-type-select"
+			<FormProvider {...form}>
+				<form className={styles.form}>
+					<FormField
+						label={t('field_channel_name')}
+						help={editing ? t('help_channel_name_immutable') : undefined}
+						error={errors.name?.message}
+						htmlFor="channel-name"
 					>
-						<Select.Option value="slack" key="slack" data-testid="select-option">
-							Slack
-						</Select.Option>
-						<Select.Option value="webhook" key="webhook" data-testid="select-option">
-							Webhook
-						</Select.Option>
-						<Select.Option
-							value="pagerduty"
-							key="pagerduty"
-							data-testid="select-option"
+						<Input
+							id="channel-name"
+							data-testid="channel-name-textbox"
+							disabled={editing}
+							{...register('name')}
+						/>
+					</FormField>
+
+					<FormField label={t('field_send_resolved')}>
+						<Controller
+							control={control}
+							name="sendResolved"
+							render={({ field }): JSX.Element => (
+								<Switch
+									color="primary"
+									textPlacement="right"
+									testId="field-send-resolved-checkbox"
+									value={!!field.value}
+									onChange={field.onChange}
+								/>
+							)}
+						/>
+					</FormField>
+
+					<FormField label={t('field_channel_type')} htmlFor="channel-type">
+						<SelectSimple
+							id="channel-type"
+							items={CHANNEL_TYPE_OPTIONS}
+							value={type}
+							disabled={editing}
+							onChange={(value): void => onTypeChangeHandler(value as ChannelKind)}
+							withPortal={false}
+							testId="channel-type-select"
+						/>
+					</FormField>
+
+					{renderSettings()}
+
+					<div className={styles.actions}>
+						<Button
+							variant="solid"
+							color="primary"
+							size="sm"
+							testId="save-channel-button"
+							loading={savingState}
+							onClick={onSaveHandler}
 						>
-							Pagerduty
-						</Select.Option>
-						<Select.Option
-							value="opsgenie"
-							key="opsgenie"
-							data-testid="select-option"
+							{t('button_save_channel')}
+						</Button>
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="sm"
+							testId="test-channel-button"
+							loading={testingState}
+							onClick={onTestHandler}
 						>
-							Opsgenie
-						</Select.Option>
-						<Select.Option value="email" key="email" data-testid="select-option">
-							Email
-						</Select.Option>
-
-						<Select.Option value="msteams" key="msteams" data-testid="select-option">
-							Microsoft Teams
-						</Select.Option>
-
-						<Select.Option
-							value="googlechat"
-							key="googlechat"
-							data-testid="select-option"
+							{t('button_test_channel')}
+						</Button>
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="sm"
+							testId="return-button"
+							onClick={(): void => {
+								history.replace(ROUTES.ALL_CHANNELS);
+							}}
 						>
-							Google Chat
-						</Select.Option>
-
-						<Select.Option value="jira" key="jira" data-testid="select-option">
-							Jira
-						</Select.Option>
-
-						<Select.Option value="jsmops" key="jsmops" data-testid="select-option">
-							Jira Service Management Ops
-						</Select.Option>
-
-						<Select.Option
-							value="incidentio"
-							key="incidentio"
-							data-testid="select-option"
-						>
-							incident.io
-						</Select.Option>
-					</Select>
-				</Form.Item>
-
-				<Form.Item>{renderSettings()}</Form.Item>
-
-				<Form.Item>
-					<Button
-						data-testid="save-channel-button"
-						disabled={savingState}
-						loading={savingState}
-						type="primary"
-						onClick={(): void => onSaveHandler(type)}
-					>
-						{t('button_save_channel')}
-					</Button>
-					<Button
-						data-testid="test-channel-button"
-						disabled={testingState}
-						loading={testingState}
-						onClick={(): void => onTestHandler(type)}
-					>
-						{t('button_test_channel')}
-					</Button>
-					<Button
-						data-testid="return-button"
-						onClick={(): void => {
-							history.replace(ROUTES.ALL_CHANNELS);
-						}}
-					>
-						{t('button_return')}
-					</Button>
-				</Form.Item>
-			</Form>
+							{t('button_return')}
+						</Button>
+					</div>
+				</form>
+			</FormProvider>
 		</>
 	);
 }
 
 interface FormAlertChannelsProps {
-	formInstance: FormInstance;
+	form: UseFormReturn<ChannelFormValues>;
 	type: ChannelKind;
-	setSelectedConfig: Dispatch<SetStateAction<ChannelSpecFormValues>>;
 	onTypeChangeHandler: (value: ChannelKind) => void;
-	onSaveHandler: (props: ChannelKind) => void;
-	onTestHandler: (props: ChannelKind) => void;
+	onSaveHandler: () => void;
+	onTestHandler: () => void;
 	testingState: boolean;
 	savingState: boolean;
 	title: string;
-	initialValue: Store;
 	// editing indicates if the form is opened in edit mode
 	editing?: boolean;
 }

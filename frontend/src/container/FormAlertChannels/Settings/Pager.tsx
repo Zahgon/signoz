@@ -1,170 +1,103 @@
-import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { Form, Input as AntdInput } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { Input as AntdInput } from 'antd';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormField from '../FormField';
 import PagerDetails from './PagerDetails';
 
 const { TextArea } = AntdInput;
 
-function PagerForm({
-	setSelectedConfig,
-	initialDetails,
-}: PagerFormProps): JSX.Element {
+function PagerForm(): JSX.Element {
 	const { t } = useTranslation('channels');
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 	return (
 		<>
-			<Form.Item
-				name="routingKey"
+			<FormField
 				label={t('field_pager_routing_key')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_pager_routing_key')}
-							variables={{}}
-						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
+				error={errors.routingKey?.message}
 			>
 				<Input
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							routingKey: event.target.value,
-						}));
-					}}
+					{...register('routingKey')}
 					data-testid="pager-routing-key-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="description"
+			<FormField
 				help={t('help_pager_description')}
 				label={t('field_pager_description')}
-				required
+				error={errors.description?.message}
 			>
-				<TextArea
-					rows={4}
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							description: event.target.value,
-						}))
-					}
-					placeholder={t('placeholder_pager_description')}
-					data-testid="pager-description-textarea"
+				<Controller
+					control={control}
+					name="description"
+					render={({ field }): JSX.Element => (
+						<TextArea
+							rows={4}
+							placeholder={t('placeholder_pager_description')}
+							data-testid="pager-description-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="severity"
+			<FormField
 				help={t('help_pager_severity')}
 				label={t('field_pager_severity')}
+				error={errors.severity?.message}
 			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							severity: event.target.value,
-						}))
-					}
-					data-testid="pager-severity-textbox"
-				/>
-			</Form.Item>
+				<Input {...register('severity')} data-testid="pager-severity-textbox" />
+			</FormField>
 
-			<PagerDetails
-				setSelectedConfig={setSelectedConfig}
-				initialDetails={initialDetails}
-			/>
+			<PagerDetails />
 
-			<Form.Item
-				name="component"
+			<FormField
 				help={t('help_pager_component')}
 				label={t('field_pager_component')}
+				error={errors.component?.message}
 			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							component: event.target.value,
-						}))
-					}
-				/>
-			</Form.Item>
+				<Input {...register('component')} />
+			</FormField>
 
-			<Form.Item
-				name="group"
+			<FormField
 				help={t('help_pager_group')}
 				label={t('field_pager_group')}
+				error={errors.group?.message}
 			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							group: event.target.value,
-						}))
-					}
-					data-testid="pager-group-textarea"
-				/>
-			</Form.Item>
+				<Input {...register('group')} data-testid="pager-group-textarea" />
+			</FormField>
 
-			<Form.Item
-				name="class"
+			<FormField
 				help={t('help_pager_class')}
 				label={t('field_pager_class')}
+				error={errors.class?.message}
 			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							class: event.target.value,
-						}))
-					}
-					data-testid="pager-class-textarea"
-				/>
-			</Form.Item>
-			<Form.Item
-				name="client"
+				<Input {...register('class')} data-testid="pager-class-textarea" />
+			</FormField>
+			<FormField
 				help={t('help_pager_client')}
 				label={t('field_pager_client')}
+				error={errors.client?.message}
 			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							client: event.target.value,
-						}))
-					}
-					data-testid="pager-client-textarea"
-				/>
-			</Form.Item>
+				<Input {...register('client')} data-testid="pager-client-textarea" />
+			</FormField>
 
-			<Form.Item
-				name="clientUrl"
+			<FormField
 				help={t('help_pager_client_url')}
 				label={t('field_pager_client_url')}
+				error={errors.clientUrl?.message}
 			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							clientUrl: event.target.value,
-						}))
-					}
-					data-testid="pager-client-url-textarea"
-				/>
-			</Form.Item>
+				<Input {...register('clientUrl')} data-testid="pager-client-url-textarea" />
+			</FormField>
 		</>
 	);
-}
-
-interface PagerFormProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
-	initialDetails?: Record<string, string>;
 }
 
 export default PagerForm;

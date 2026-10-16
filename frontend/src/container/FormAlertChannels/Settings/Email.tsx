@@ -1,49 +1,48 @@
-import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { Form } from 'antd';
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormField from '../FormField';
 
-function EmailForm({ setSelectedConfig }: EmailFormProps): JSX.Element {
+function EmailForm(): JSX.Element {
 	const { t } = useTranslation('channels');
-
-	const handleInputChange =
-		(field: string) =>
-		(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
-			setSelectedConfig((value) => ({
-				...value,
-				[field]: event.target.value,
-			}));
-		};
+	const {
+		register,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 
 	return (
 		<>
-			<Form.Item
-				name="to"
+			<FormField
 				help={t('help_email_to')}
 				label={t('field_email_to')}
-				required
+				error={errors.to?.message}
 			>
 				<Input
-					onChange={handleInputChange('to')}
+					{...register('to')}
 					placeholder={t('placeholder_email_to')}
 					data-testid="email-to-textbox"
 				/>
-			</Form.Item>
+			</FormField>
 
-			{/* <Form.Item name="html" label={t('field_email_html')} required>
-				<TextArea
+			{/* <FormField label={t('field_email_html')} required
+				error={errors.html?.message}
+			>
+				<Controller
+					control={control}
+					name="html"
+					render={({ field }): JSX.Element => (
+						<TextArea
 					rows={4}
-					onChange={handleInputChange('html')}
 					placeholder={t('placeholder_email_html')}
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item> */}
+			</FormField> */}
 		</>
 	);
-}
-
-interface EmailFormProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
 }
 
 export default EmailForm;

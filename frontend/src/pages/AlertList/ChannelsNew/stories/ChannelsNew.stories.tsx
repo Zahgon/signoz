@@ -29,22 +29,19 @@ export default meta;
 
 type Story = StoryObj<ChannelsNewArgs>;
 
-/**
- * The type is an antd Select: clicking the element carrying the test id does
- * nothing, the combobox inside it is what opens the list.
- */
 const selectChannelType = async (
 	canvasElement: HTMLElement,
 	label: RegExp,
 ): Promise<void> => {
-	const canvas = within(canvasElement);
-	const select = await canvas.findByTestId('channel-type-select');
+	const trigger = await within(canvasElement).findByTestId(
+		'channel-type-select',
+	);
 
-	await userEvent.click(within(select).getByRole('combobox'));
-	await userEvent.click(await screen.findByTitle(label));
-	// The form under the Select swaps a render after the option is taken, so the
-	// Select's own value is what says the story is on the type it names.
-	await within(select).findByTitle(label);
+	await userEvent.click(trigger);
+	await userEvent.click(await screen.findByRole('option', { name: label }));
+	// The form under the select swaps a render after the option is taken, so the
+	// trigger's own value is what says the story is on the type it names.
+	await within(trigger).findByText(label);
 };
 
 /** A new notification channel, on the Slack form the page opens with. */
@@ -53,11 +50,9 @@ export const Default: Story = {};
 /** Interaction: the channel-type Select opens its real portal-backed option list. */
 export const ChannelTypeSelectOpen: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
-		const select = await within(canvasElement).findByTestId(
-			'channel-type-select',
+		await userEvent.click(
+			await within(canvasElement).findByTestId('channel-type-select'),
 		);
-
-		await userEvent.click(within(select).getByRole('combobox'));
 		await screen.findByRole('listbox');
 	},
 };
