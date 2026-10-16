@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Form, Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Form, Input as AntdInput } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
@@ -46,7 +47,7 @@ function GoogleChat({ setSelectedConfig }: GoogleChatProps): JSX.Element {
 			</Form.Item>
 
 			<Form.Item name="title" label={t('field_slack_title')}>
-				<Input.TextArea
+				<AntdInput.TextArea
 					rows={4}
 					onChange={(event): void =>
 						setSelectedConfig((value) => ({
@@ -59,7 +60,7 @@ function GoogleChat({ setSelectedConfig }: GoogleChatProps): JSX.Element {
 			</Form.Item>
 
 			<Form.Item name="text" label={t('field_slack_description')}>
-				<Input.TextArea
+				<AntdInput.TextArea
 					rows={4}
 					onChange={(event): void =>
 						setSelectedConfig((value) => ({

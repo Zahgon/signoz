@@ -1,7 +1,8 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Minus, Plus } from '@signozhq/icons';
-import { Button, Form, Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Form, Input as AntdInput } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
@@ -85,7 +86,7 @@ function IncidentIOSettings({
 				label={t('field_incidentio_title')}
 				help={t('help_incidentio_title')}
 			>
-				<Input.TextArea
+				<AntdInput.TextArea
 					rows={2}
 					onChange={(event): void => update({ title: event.target.value })}
 					data-testid="incidentio-title-textarea"
@@ -97,7 +98,7 @@ function IncidentIOSettings({
 				label={t('field_incidentio_description')}
 				help={t('help_incidentio_description')}
 			>
-				<Input.TextArea
+				<AntdInput.TextArea
 					rows={6}
 					onChange={(event): void => update({ description: event.target.value })}
 					data-testid="incidentio-description-textarea"

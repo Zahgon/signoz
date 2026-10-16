@@ -7,6 +7,7 @@ import { Form } from 'antd';
 import { AlertmanagertypesChannelSlackActionDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import styles from './SlackActions.module.scss';
 
 interface SlackActionsProps {
 	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
@@ -50,33 +51,38 @@ function SlackActions({
 			{rows.map((row, index) => (
 				// the rows have no stable id, and reordering is not offered
 				// eslint-disable-next-line react/no-array-index-key
-				<div key={index} className="slack-actions-row">
+				<div key={index} className={styles.row}>
 					<Input
 						value={row.text}
+						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_text')}
 						onChange={(event): void => updateRow(index, { text: event.target.value })}
 						testId={`slack-action-text-${index}`}
 					/>
 					<Input
 						value={row.url}
+						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_url')}
 						onChange={(event): void => updateRow(index, { url: event.target.value })}
 						testId={`slack-action-url-${index}`}
 					/>
 					<Input
 						value={row.type}
+						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_type')}
 						onChange={(event): void => updateRow(index, { type: event.target.value })}
 						testId={`slack-action-type-${index}`}
 					/>
 					<Input
 						value={row.name ?? ''}
+						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_name')}
 						onChange={(event): void => updateRow(index, { name: event.target.value })}
 						testId={`slack-action-name-${index}`}
 					/>
 					<Input
 						value={row.value ?? ''}
+						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_value')}
 						onChange={(event): void =>
 							updateRow(index, { value: event.target.value })
@@ -85,6 +91,7 @@ function SlackActions({
 					/>
 					<Input
 						value={row.style ?? ''}
+						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_style')}
 						onChange={(event): void =>
 							updateRow(index, { style: event.target.value })
@@ -93,6 +100,7 @@ function SlackActions({
 					/>
 					<Input
 						value={row.confirm?.text ?? ''}
+						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_action_confirm')}
 						onChange={(event): void =>
 							updateRow(index, {

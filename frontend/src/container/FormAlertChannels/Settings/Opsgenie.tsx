@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { Form, Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Form, Input as AntdInput } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 
-const { TextArea } = Input;
+const { TextArea } = AntdInput;
 
 function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 	const { t } = useTranslation('channels');

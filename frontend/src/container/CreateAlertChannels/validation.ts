@@ -1,105 +1,53 @@
 import { TFunction } from 'i18next';
+import type { ZodType } from 'zod';
 
+import { emailSchema } from './schemas/email';
+import { googleChatSchema } from './schemas/googlechat';
+import { incidentIOSchema } from './schemas/incidentio';
+import { jiraSchema } from './schemas/jira';
+import { jsmOpsSchema } from './schemas/jsmops';
+import { msTeamsSchema } from './schemas/msteams';
+import { opsgenieSchema } from './schemas/opsgenie';
+import { pagerdutySchema } from './schemas/pagerduty';
+import { channelNameSchema } from './schemas/shared';
+import { slackSchema } from './schemas/slack';
+import { webhookSchema } from './schemas/webhook';
 import { ChannelFormValues, ChannelKind } from './types';
-import {
-	isValidGoogleChatWebhookURL,
-	isValidIncidentIOURL,
-	isValidJiraReopenDuration,
-	isValidJiraSiteURL,
-} from './utils';
 
-type Validator = (values: ChannelFormValues, t: TFunction) => string | null;
-
-const requireWebhookUrl: Validator = (values, t) =>
-	values.webhookUrl ? null : t('webhook_url_required');
-
-const requireApiKey: Validator = (values, t) =>
-	values.apiKey ? null : t('api_key_required');
-
-const validateSlack: Validator = (values, t) =>
-	values.apiUrl ? null : t('webhook_url_required');
-
-const validateWebhook: Validator = (values, t) => {
-	if (!values.url) {
-		return t('webhook_url_required');
-	}
-	// the API allows bearer-only and no-auth webhooks, but a username without its
-	// password is still an incomplete basic auth pair
-	return values.username && !values.password ? t('username_no_password') : null;
-};
-
-const validatePagerduty: Validator = (values, t) =>
-	values.routingKey ? null : t('routing_key_required');
-
-const validateEmail: Validator = (values, t) =>
-	values.to ? null : t('to_required');
-
-const validateGoogleChat: Validator = (values, t) => {
-	if (!values.webhookUrl) {
-		return t('webhook_url_required');
-	}
-	return isValidGoogleChatWebhookURL(values.webhookUrl)
-		? null
-		: t('google_chat_webhook_url_invalid');
-};
-
-const validateJira: Validator = (values, t) => {
-	if (
-		!values.site ||
-		!values.email ||
-		!values.apiToken ||
-		!values.project ||
-		!values.issueType
-	) {
-		return t('jira_required_fields');
-	}
-	if (!isValidJiraSiteURL(values.site)) {
-		return t('jira_site_invalid');
-	}
-	if (
-		values.reopenDuration &&
-		!isValidJiraReopenDuration(values.reopenDuration)
-	) {
-		return t('jira_reopen_duration_invalid');
-	}
-	return null;
-};
-
-const validateIncidentIO: Validator = (values, t) => {
-	if (!values.url || !values.token) {
-		return t('incidentio_required_fields');
-	}
-	return isValidIncidentIOURL(values.url) ? null : t('incidentio_url_invalid');
-};
-
-const VALIDATORS: Record<ChannelKind, Validator> = {
-	[ChannelKind.slack]: validateSlack,
-	[ChannelKind.webhook]: validateWebhook,
-	[ChannelKind.pagerduty]: validatePagerduty,
-	[ChannelKind.opsgenie]: requireApiKey,
-	[ChannelKind.jsmops]: requireApiKey,
-	[ChannelKind.email]: validateEmail,
-	[ChannelKind.msteams]: requireWebhookUrl,
-	[ChannelKind.googlechat]: validateGoogleChat,
-	[ChannelKind.jira]: validateJira,
-	[ChannelKind.incidentio]: validateIncidentIO,
+/** The spec schema for each kind, mirroring `Validate()` in `pkg/types/alertmanagertypes`. */
+export const CHANNEL_SCHEMAS: Record<ChannelKind, ZodType> = {
+	[ChannelKind.slack]: slackSchema,
+	[ChannelKind.webhook]: webhookSchema,
+	[ChannelKind.pagerduty]: pagerdutySchema,
+	[ChannelKind.opsgenie]: opsgenieSchema,
+	[ChannelKind.jsmops]: jsmOpsSchema,
+	[ChannelKind.email]: emailSchema,
+	[ChannelKind.msteams]: msTeamsSchema,
+	[ChannelKind.googlechat]: googleChatSchema,
+	[ChannelKind.jira]: jiraSchema,
+	[ChannelKind.incidentio]: incidentIOSchema,
 };
 
 /**
  * Client-side validation for the fields the API rejects outright, so a save
- * round trip is not spent on an obviously incomplete form. Each rule mirrors the
- * matching `Validate()` in `pkg/types/alertmanagertypes`. Returns the message to
- * show, or null when the form can be submitted.
+ * round trip is not spent on an obviously incomplete form. Returns the message
+ * to show, or null when the form can be submitted.
  */
 export function validateChannel(
 	kind: ChannelKind,
 	values: ChannelFormValues,
 	t: TFunction,
 ): string | null {
-	if (!values.name) {
-		return t('channel_name_required');
+	const nameResult = channelNameSchema.safeParse(values);
+	if (!nameResult.success) {
+		return t(nameResult.error.issues[0].message);
 	}
 
-	const validate = VALIDATORS[kind];
-	return validate ? validate(values, t) : t('selected_channel_invalid');
+	const schema = CHANNEL_SCHEMAS[kind];
+	if (!schema) {
+		return t('selected_channel_invalid');
+	}
+
+	const result = schema.safeParse(values);
+	return result.success ? null : t(result.error.issues[0].message);
 }

@@ -9,6 +9,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { AlertmanagertypesChannelSlackFieldDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import styles from './SlackFields.module.scss';
 
 interface SlackFieldsProps {
 	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
@@ -44,9 +45,10 @@ function SlackFields({
 			{rows.map((row, index) => (
 				// the rows have no stable id, and reordering is not offered
 				// eslint-disable-next-line react/no-array-index-key
-				<div key={index} className="slack-fields-row">
+				<div key={index} className={styles.row}>
 					<Input
 						value={row.title}
+						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_field_title')}
 						onChange={(event): void =>
 							updateRow(index, { title: event.target.value })
@@ -55,6 +57,7 @@ function SlackFields({
 					/>
 					<Input
 						value={row.value}
+						containerClassName={styles.field}
 						placeholder={t('placeholder_slack_field_value')}
 						onChange={(event): void =>
 							updateRow(index, { value: event.target.value })

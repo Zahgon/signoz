@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Collapse, Form, Input, Select } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Collapse, Form, Input as AntdInput, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
@@ -216,7 +217,7 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 				label={t('field_jira_summary')}
 				help={t('help_jira_summary')}
 			>
-				<Input.TextArea
+				<AntdInput.TextArea
 					rows={2}
 					onChange={(event): void => update({ summary: event.target.value })}
 					data-testid="jira-summary-textarea"
@@ -228,7 +229,7 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 				label={t('field_jira_description')}
 				help={t('help_jira_description')}
 			>
-				<Input.TextArea
+				<AntdInput.TextArea
 					rows={6}
 					onChange={(event): void => update({ description: event.target.value })}
 					data-testid="jira-description-textarea"

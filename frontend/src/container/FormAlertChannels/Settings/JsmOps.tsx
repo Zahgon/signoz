@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Collapse, Form, Input, Select } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Collapse, Form, Input as AntdInput, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
 import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
@@ -18,7 +19,7 @@ function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 				label={t('field_jsmops_priority')}
 				help={t('help_jsmops_priority')}
 			>
-				<Input.TextArea
+				<AntdInput.TextArea
 					rows={2}
 					onChange={(event): void => update({ priority: event.target.value })}
 					data-testid="jsmops-priority-textarea"
@@ -82,7 +83,7 @@ function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 				label={t('field_jsmops_message')}
 				help={t('help_jsmops_message')}
 			>
-				<Input.TextArea
+				<AntdInput.TextArea
 					rows={2}
 					onChange={(event): void => update({ message: event.target.value })}
 					data-testid="jsmops-message-textarea"
@@ -94,7 +95,7 @@ function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 				label={t('field_jsmops_description')}
 				help={t('help_jsmops_description')}
 			>
-				<Input.TextArea
+				<AntdInput.TextArea
 					rows={6}
 					onChange={(event): void => update({ description: event.target.value })}
 					data-testid="jsmops-description-textarea"
