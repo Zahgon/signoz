@@ -99,6 +99,8 @@ function FormAlertChannels({
 
 			<FormProvider {...form}>
 				<form className={styles.form}>
+					{/* the @signozhq inputs take no disabled context and the settings
+					    still render antd textareas; the fieldset turns off both. */}
 					<fieldset className={styles.fields} disabled={readOnly}>
 						<FormField
 							label={t('field_channel_name')}

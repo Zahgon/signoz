@@ -3,15 +3,15 @@
 	flex-direction: column;
 }
 
+.fields {
+	border: 0;
+	padding: 0;
+	margin: 0;
+	min-width: 0;
+}
+
 .actions {
 	display: flex;
 	gap: var(--spacing-2);
 	margin-top: var(--spacing-4);
-}
-
-.fields {
-	display: contents;
-	border: none;
-	margin: 0;
-	padding: 0;
 }

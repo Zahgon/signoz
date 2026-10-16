@@ -3,7 +3,6 @@ import {
 	Braces,
 	Ellipsis,
 	Eye,
-	PenLine,
 	SquareArrowOutUpRight,
 	Trash2,
 } from '@signozhq/icons';
@@ -31,22 +30,17 @@ function ChannelActionsMenu({
 	// A list of N channels would otherwise check its verbs per row on mount, for
 	// menus nobody opened, and the authz API caps one batch at 25 transactions.
 	const [hasOpened, setHasOpened] = useState(false);
-	const { canEdit, deletePermission } = useNotificationChannelPermissions(
-		channel.id,
-		{ enabled: hasOpened },
-	);
-
-	// Without `update` the same screen is still readable, so the action opens it
-	// as a view rather than disappearing.
-	const openLabel = canEdit ? 'Edit' : 'View';
+	const { deletePermission } = useNotificationChannelPermissions(channel.id, {
+		enabled: hasOpened,
+	});
 
 	const menuItems = useMemo<AuthZDropdownItemType[]>(
 		() => [
 			{
 				type: 'item',
 				value: 'open',
-				label: openLabel,
-				prefix: canEdit ? <PenLine size={14} /> : <Eye size={14} />,
+				label: 'View',
+				prefix: <Eye size={14} />,
 				onClick: (): void => onOpen(channel),
 			},
 			{
@@ -74,7 +68,7 @@ function ChannelActionsMenu({
 				onClick: (): void => onDelete(channel),
 			},
 		],
-		[openLabel, canEdit, deletePermission, channel, onOpen, onDelete, onViewJson],
+		[deletePermission, channel, onOpen, onDelete, onViewJson],
 	);
 
 	const handleOpenChange = useCallback((open: boolean): void => {
